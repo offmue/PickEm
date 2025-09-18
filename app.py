@@ -703,7 +703,7 @@ init_database()
 try:
     import sys
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-    from flask_auto_updater_fixed import integrate_nfl_auto_updater
+    from flask_auto_updater import integrate_nfl_auto_updater
     
     # Set database path for auto-updater
     app.config['DATABASE_PATH'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nfl_pickem.db')

@@ -12,7 +12,7 @@ from flask import jsonify
 import logging
 
 # Import our auto updater
-from auto_nfl_updater_fixed import NFLAutoUpdater
+from auto_nfl_updater import NFLAutoUpdater
 
 logger = logging.getLogger(__name__)
 
