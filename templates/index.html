@@ -882,5 +882,154 @@
             }
         }
     </script>
-</body>
+
+        <!-- Admin Interface -->
+        <div id="admin-panel" style="display: none;" class="tab-content">
+            <h2>🔧 Admin Panel</h2>
+            <div class="admin-section">
+                <h3>Spielergebnis setzen</h3>
+                <div class="form-group">
+                    <label for="pending-games">Spiel auswählen:</label>
+                    <select id="pending-games" class="form-control">
+                        <option value="">-- Spiel auswählen --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="away-score">Auswärts Punkte:</label>
+                    <input type="number" id="away-score" class="form-control" min="0" max="100">
+                </div>
+                <div class="form-group">
+                    <label for="home-score">Heim Punkte:</label>
+                    <input type="number" id="home-score" class="form-control" min="0" max="100">
+                </div>
+                <button id="set-result-btn" class="btn btn-primary">Ergebnis setzen & Automatisch validieren</button>
+                <div id="admin-result" class="alert" style="display: none; margin-top: 10px;"></div>
+            </div>
+        </div>
+
+        <script>
+        // Admin functionality
+        let isAdmin = false;
+        let pendingGames = [];
+
+        function showAdminTab() {
+            if (isAdmin) {
+                const adminTab = document.createElement('li');
+                adminTab.innerHTML = '<a href="#" onclick="showTab('admin-panel')">🔧 Admin</a>';
+                document.querySelector('.nav-tabs').appendChild(adminTab);
+            }
+        }
+
+        function loadPendingGames() {
+            if (!isAdmin) return;
+            
+            fetch('/api/admin/pending-games')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        pendingGames = data.pending_games;
+                        const select = document.getElementById('pending-games');
+                        select.innerHTML = '<option value="">-- Spiel auswählen --</option>';
+                        
+                        pendingGames.forEach(game => {
+                            const option = document.createElement('option');
+                            option.value = game.id;
+                            option.textContent = game.display;
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error loading pending games:', error));
+        }
+
+        document.getElementById('set-result-btn').addEventListener('click', function() {
+            const matchId = document.getElementById('pending-games').value;
+            const awayScore = parseInt(document.getElementById('away-score').value);
+            const homeScore = parseInt(document.getElementById('home-score').value);
+            
+            if (!matchId || isNaN(awayScore) || isNaN(homeScore)) {
+                showAdminResult('Bitte alle Felder ausfüllen', 'error');
+                return;
+            }
+            
+            fetch('/api/admin/set-result', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    match_id: parseInt(matchId),
+                    home_score: homeScore,
+                    away_score: awayScore
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAdminResult(`✅ ${data.message}\n🤖 ${data.picks_updated} User-Picks automatisch aktualisiert`, 'success');
+                    // Clear form
+                    document.getElementById('pending-games').value = '';
+                    document.getElementById('away-score').value = '';
+                    document.getElementById('home-score').value = '';
+                    // Reload pending games
+                    loadPendingGames();
+                    // Refresh dashboard if visible
+                    if (document.getElementById('dashboard').style.display !== 'none') {
+                        loadDashboard();
+                    }
+                } else {
+                    showAdminResult(`❌ ${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error setting result:', error);
+                showAdminResult('❌ Fehler beim Setzen des Ergebnisses', 'error');
+            });
+        });
+
+        function showAdminResult(message, type) {
+            const resultDiv = document.getElementById('admin-result');
+            resultDiv.textContent = message;
+            resultDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
+            resultDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Modify existing login function to handle admin status
+        const originalLogin = login;
+        function login() {
+            const username = document.getElementById('username').value;
+            
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username: username })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    isAdmin = data.is_admin;
+                    document.getElementById('login-section').style.display = 'none';
+                    document.getElementById('main-app').style.display = 'block';
+                    document.getElementById('user-info').textContent = `Angemeldet als: ${username}`;
+                    
+                    showAdminTab();
+                    loadDashboard();
+                    loadPendingGames();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Login error:', error);
+                alert('Login-Fehler');
+            });
+        }
+        </script>
+        </body>
 </html>
