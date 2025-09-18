@@ -779,7 +779,7 @@ def get_matches():
         
         logger.info(f"Successfully returning {len(matches_data)} matches for week {week}")
         
-                return jsonify({
+        return jsonify({
             'success': True,
             'matches': matches_data,
             'picks': picks_data,
