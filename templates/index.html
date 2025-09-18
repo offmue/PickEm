@@ -540,7 +540,7 @@
             </div>
 
             <!-- Admin Panel -->
-            <div id="admin-panel" style="display: none;" class="tab-content">
+            <div id="admin-panel" class="tab-content">
                 <h2>🔧 Admin Panel</h2>
                 <div class="admin-section">
                     <h3>Spielergebnis setzen</h3>
@@ -738,7 +738,7 @@
                         }
                         
                         data.matches.forEach(match => {
-                            const matchCard = createMatchCard(match, data.picks, data.unpickable_teams);
+                            const matchCard = createMatchCard(match, data.picks, data.unpickable_teams, data.unpickable_reasons || {});
                             container.appendChild(matchCard);
                         });
                     } else {
@@ -753,7 +753,7 @@
         }
 
         // Create match card
-        function createMatchCard(match, picks, unpickableTeams) {
+        function createMatchCard(match, picks, unpickableTeams, unpickableReasons) {
             const card = document.createElement('div');
             card.className = 'match-card';
             
@@ -783,16 +783,18 @@
                     <button class="pick-btn ${userPick === match.away_team.id ? 'selected' : ''} 
                                    ${unpickableTeams.includes(match.away_team.id) || isCompleted ? 'disabled' : ''}"
                             onclick="makePick(${match.id}, ${match.away_team.id}, ${document.getElementById('week-select').value})"
-                            ${unpickableTeams.includes(match.away_team.id) || isCompleted ? 'disabled' : ''}>
+                            ${unpickableTeams.includes(match.away_team.id) || isCompleted ? 'disabled' : ''}
+                            title="${unpickableTeams.includes(match.away_team.id) ? unpickableReasons[match.away_team.id] || 'Nicht verfügbar' : ''}">
                         ${match.away_team.name}
-                        ${unpickableTeams.includes(match.away_team.id) ? '<br><small>(Nicht verfügbar)</small>' : ''}
+                        ${unpickableTeams.includes(match.away_team.id) ? `<br><small>(${unpickableReasons[match.away_team.id] || 'Nicht verfügbar'})</small>` : ''}
                     </button>
                     <button class="pick-btn ${userPick === match.home_team.id ? 'selected' : ''} 
                                    ${unpickableTeams.includes(match.home_team.id) || isCompleted ? 'disabled' : ''}"
                             onclick="makePick(${match.id}, ${match.home_team.id}, ${document.getElementById('week-select').value})"
-                            ${unpickableTeams.includes(match.home_team.id) || isCompleted ? 'disabled' : ''}>
+                            ${unpickableTeams.includes(match.home_team.id) || isCompleted ? 'disabled' : ''}
+                            title="${unpickableTeams.includes(match.home_team.id) ? unpickableReasons[match.home_team.id] || 'Nicht verfügbar' : ''}">
                         ${match.home_team.name}
-                        ${unpickableTeams.includes(match.home_team.id) ? '<br><small>(Nicht verfügbar)</small>' : ''}
+                        ${unpickableTeams.includes(match.home_team.id) ? `<br><small>(${unpickableReasons[match.home_team.id] || 'Nicht verfügbar'})</small>` : ''}
                     </button>
                 </div>
             `;
